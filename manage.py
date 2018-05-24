@@ -1,22 +1,11 @@
 # coding=utf-8
-from flask import Flask
-from flask_sqlalchemy import SQLAlchemy
 from redis import StrictRedis
-from flask_wtf.csrf import CSRFProtect
-from flask_session import Session
 from flask_script import Manager
 from flask_migrate import Migrate, MigrateCommand
 from config import Config
+from info import app, db
 
-app = Flask(__name__)
 
-# 加载配置文件
-app.config.from_object(Config)
-# 创建连接到mysql数据库的对象
-db = SQLAlchemy(app)
-# 开启csrf保护
-CSRFProtect(app)
-Session(app)
 # 集成flask_script
 manager = Manager(app)
 # 在迁移时让app和db建立关联
