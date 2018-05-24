@@ -17,3 +17,20 @@ class Config(object):
     SESSION_USE_SIGNER = True
     # 设置session有效期 为一天
     PERNAMENT_SESSION_LIFETIME = 3600*24
+
+# 抽取不同环境的配置
+# 开发环境
+class DevelopmentConfig(Config):
+    pass
+
+
+# 生产环境
+class ProductionConfig(Config):
+    # 关闭DEBUG模式
+    DEBUG = False
+
+
+# 测试环境
+class UnittestConfig(Config):
+    # 开启测试状态
+    TESTING = True
