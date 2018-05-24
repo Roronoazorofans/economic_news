@@ -34,3 +34,11 @@ class ProductionConfig(Config):
 class UnittestConfig(Config):
     # 开启测试状态
     TESTING = True
+
+
+# 准备工厂方法create_app(参数)的原材料
+configs = {
+    'dev': DevelopmentConfig,
+    'pro': ProductionConfig,
+    'uni': UnittestConfig
+}
