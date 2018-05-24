@@ -4,6 +4,8 @@ from flask_sqlalchemy import SQLAlchemy
 from redis import StrictRedis
 from flask_wtf.csrf import CSRFProtect
 from flask_session import Session
+from flask_script import Manager
+from flask_migrate import Migrate, MigrateCommand
 
 
 app = Flask(__name__)
@@ -32,7 +34,12 @@ db = SQLAlchemy(app)
 # 开启csrf保护
 CSRFProtect(app)
 Session(app)
-
+# 集成flask_script
+manager = Manager(app)
+# 在迁移时让app和db建立关联
+Migrate(app, db)
+# 添加迁移脚本到脚本管理器
+manager.add_command("db", MigrateCommand)
 
 redis_store = StrictRedis(host=Config.REDIS_HOST, port=Config.REDIS_PORT)
 @app.route('/')
@@ -42,4 +49,4 @@ def index():
 
 if __name__ == '__main__':
     redis_store.set("name", "zoro")
-    app.run()
+    manager.run()
