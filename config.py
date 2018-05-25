@@ -1,4 +1,5 @@
 # coding=utf-8
+import logging
 
 # 抽取配置到配置文件中
 # 创建配置文件
@@ -21,19 +22,24 @@ class Config(object):
 # 抽取不同环境的配置
 # 开发环境
 class DevelopmentConfig(Config):
-    pass
+    # 开发环境下的日志等级为DEBUG等级
+    LOGGING_LEVEL = logging.DEBUG
 
 
 # 生产环境
 class ProductionConfig(Config):
     # 关闭DEBUG模式
     DEBUG = False
+    # 生产环境下的日志等级为ERROR等级
+    LOGGING_LEVEL = logging.ERROR
 
 
 # 测试环境
 class UnittestConfig(Config):
     # 开启测试状态
     TESTING = True
+    # 测试环境下的日志等级为DEBUG等级
+    LOGGING_LEVEL = logging.DEBUG
 
 
 # 准备工厂方法create_app(参数)的原材料
