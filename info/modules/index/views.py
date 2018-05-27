@@ -1,6 +1,6 @@
 # coding=utf-8
 from . import index_blue
-from flask import render_template
+from flask import render_template, current_app
 from info import redis_store
 @index_blue.route("/")
 def index():
@@ -11,6 +11,6 @@ def index():
     # 主页渲染
     return render_template("news/index.html")
 
-@index_blue.route("/favicon.ico")
+@index_blue.route("/favicon.ico", methods=["GET"])
 def favicon():
-    return render_template("news/favicon.ico")
+    return current_app.send_static_file("news/favicon.ico")

@@ -165,7 +165,7 @@ function generateImageCode() {
     // 获取uuid
     imageCodeId = generateUUID();
     //  生成获取图片验证码的url
-    var url = "/imagecode?imageCodeId=" + imageCodeId;
+    var url = "/passport/image_code?imageCodeId=" + imageCodeId;
     //  将url设置到img标签的src数据
     $(".get_pic_code").attr("src", url);
 }
@@ -189,7 +189,27 @@ function sendSMSCode() {
         return;
     }
 
+    var params = {
+        'mobile':mobile,
+        'image_code':imageCode,
+        'image_code_id':imageCodeId
+    };
+
+
     // TODO 发送短信验证码
+    $.ajax({
+        url:"/passport/sms_code",
+        type:'post',
+        data:JSON.stringify(params),
+        contentType:'application/json',
+        success:function (response) {
+            if(response.errno == '0'){
+                alert("发送短信验证码成功")
+            }else {
+                alert(response.errmsg)
+            }
+        }
+    });
 }
 
 // 调用该函数模拟点击左侧按钮
