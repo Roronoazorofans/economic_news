@@ -1,6 +1,6 @@
 # coding=utf-8
 from logging.handlers import RotatingFileHandler
-from flask import Flask, Blueprint
+from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_wtf.csrf import CSRFProtect
 from flask_session import Session
@@ -47,6 +47,10 @@ def create_app(config_name):
     from info.modules.index import index_blue
     # 将蓝图注册到app
     app.register_blueprint(index_blue)
+    # 将用户模块的蓝图导入
+    from info.modules.passport import passport_blue
+    # 将蓝图注册到app
+    app.register_blueprint(passport_blue)
 
     # 一定要注意返回app对象!!!
     return app
