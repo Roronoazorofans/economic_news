@@ -1,11 +1,12 @@
 # coding=utf-8
 from logging.handlers import RotatingFileHandler
-from flask import Flask
+from flask import Flask, Blueprint
 from flask_sqlalchemy import SQLAlchemy
 from flask_wtf.csrf import CSRFProtect
 from flask_session import Session
 from config import configs
 import logging
+from info.modules.index import index_blue
 
 # 对全局db的处理,请看SQLAlchemy源代码
 # 创建SQLAlchemy对象
@@ -38,5 +39,8 @@ def create_app(config_name):
     # 开启csrf保护
     CSRFProtect(app)
     Session(app)
+
+    # 将蓝图注册到app
+    app.register_blueprint(index_blue)
     # 一定要注意返回app对象!!!
     return app

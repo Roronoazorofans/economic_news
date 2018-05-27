@@ -1,0 +1,8 @@
+# coding=utf-8
+from flask import Blueprint
+
+#创建主页的蓝图
+index_blue = Blueprint("index", __name__)
+
+# 导入views,保证蓝图注册路由能够被执行
+from . import views
