@@ -6,7 +6,8 @@ from flask_wtf.csrf import CSRFProtect
 from flask_session import Session
 from config import configs
 import logging
-from info.modules.index import index_blue
+
+from redis import StrictRedis
 
 # 对全局db的处理,请看SQLAlchemy源代码
 # 创建SQLAlchemy对象
@@ -25,6 +26,7 @@ def setuplogging(level):
     # 为全局的日志⼯具对象（flask app使用的）添加日志记录器
     logging.getLogger().addHandler(file_log_handler)
 
+redis_store = None
 
 # 工厂方法创建app
 def create_app(config_name):
@@ -36,11 +38,15 @@ def create_app(config_name):
     # # 创建连接到mysql数据库的对象
     # db = SQLAlchemy(app)
     db.init_app(app)
+    global redis_store
+    redis_store = StrictRedis(host=configs[config_name].REDIS_HOST, port=configs[config_name].REDIS_PORT,           decode_responses=True)
     # 开启csrf保护
     CSRFProtect(app)
     Session(app)
-
+    # 哪里注册蓝图就在哪里导入,避免导入时模块不存在
+    from info.modules.index import index_blue
     # 将蓝图注册到app
     app.register_blueprint(index_blue)
+
     # 一定要注意返回app对象!!!
     return app
