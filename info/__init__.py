@@ -39,7 +39,7 @@ def create_app(config_name):
     # db = SQLAlchemy(app)
     db.init_app(app)
     global redis_store
-    redis_store = StrictRedis(host=configs[config_name].REDIS_HOST, port=configs[config_name].REDIS_PORT,           decode_responses=True)
+    redis_store = StrictRedis(host=configs[config_name].REDIS_HOST, port=configs[config_name].REDIS_PORT,decode_responses=True)
     # 开启csrf保护
     # CSRFProtect(app)
     Session(app)

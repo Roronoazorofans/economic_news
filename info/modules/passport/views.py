@@ -29,16 +29,16 @@ def sms_code():
     if not all([mobile, image_code_client, image_code_id]):
         return jsonify(errno=response_code.RET.PARAMERR, errmsg='缺少参数')
     if not re.match(r'^1[345678][0-9]{9}$', mobile):
-        return jsonify(errno=response_code.RET.PARAMERR, errmsg='⼿手机号格式错误')
+        return jsonify(errno=response_code.RET.PARAMERR, errmsg='手机号格式错误')
     try:
         image_code_server = redis_store.get("ImageCode" + image_code_id)
     except Exception as e:
         current_app.logger.error(e)
-        return jsonify(errno=response_code.RET.DBERR, errmsg='查询图⽚片验证码失败')
+        return jsonify(errno=response_code.RET.DBERR, errmsg='查询图⽚验证码失败')
     if not image_code_server:
-        return jsonify(errno=response_code.RET.NODATA, errmsg='图⽚片验证码不不存在')
-    if image_code_server != image_code_client:
-        return jsonify(errno=response_code.RET.PARAMERR, errmsg='图⽚片验证码输⼊入有误')
+        return jsonify(errno=response_code.RET.NODATA, errmsg='图⽚验证码不存在')
+    if image_code_server.lower() != image_code_client.lower():
+        return jsonify(errno=response_code.RET.PARAMERR, errmsg='图⽚验证码输⼊有误')
     sms_code = '%06d' % random.randint(0,999999)
     result = CCP().send_template_sms(mobile, [sms_code, '5'],'1')
     if result != 0:
@@ -55,59 +55,60 @@ def sms_code():
 
 
 
-# @passport_blue.route("/image_code")
-# def image_code():
-#     """提供图片验证码"""
-#     # 1. 获取imageCodeId
-#     imageCodeId = request.args.get("imageCodeId")
-#     # 2. 校验参数
-#     if not imageCodeId:
-#         abort(403)
-#     # 3. 生成图片验证码
-#     name,text,image = captcha.generate_captcha()
-#     # 4. 保存图片验证码到redis数据库
-#     try:
-#         redis_store.set('ImageCode'+imageCodeId, text, constants.IMAGE_CODE_REDIS_EXPIRES)
-#     except Exception as e:
-#         current_app.logger.error(e)
-#         abort(500)
-#     # 5. 响应图片验证码
-#     response = make_response(image)
-#     response.headers['Content-Type'] = 'image/jpg'
-#     return response
-
-@passport_blue.route('/image_code')
+@passport_blue.route("/image_code")
 def image_code():
-    """提供图片验证码
-    1.接受参数（图片验证码唯一标识uuid）
-    2.校验参数（判断参数是否存在）
-    3.生成图片验证码
-    4.存储图片验证码
-    5.将图片的类型指定为image/jpg
-    6.响应图片验证码
-    """
-    # 1.接受参数（图片验证码唯一标识uuid）
-    print('hello')
-    imageCodeId = request.args.get('imageCodeId')
-
-    # 2.校验参数（判断参数是否存在）
+    """提供图片验证码"""
+    # 1. 获取imageCodeId
+    imageCodeId = request.args.get("imageCodeId")
+    # 2. 校验参数
     if not imageCodeId:
         abort(403)
-
-    # 3.生成图片验证码:text写入到redis,image响应到浏览器
+    # 3. 生成图片验证码
     name,text,image = captcha.generate_captcha()
-
-    # 4.存储图片验证码
+    current_app.logger.debug(text)
+    # 4. 保存图片验证码到redis数据库
     try:
-        redis_store.set('ImageCode:'+imageCodeId, text, constants.IMAGE_CODE_REDIS_EXPIRES)
+        redis_store.set('ImageCode'+imageCodeId, text, constants.IMAGE_CODE_REDIS_EXPIRES)
     except Exception as e:
         current_app.logger.error(e)
         abort(500)
-
-    # 5.将图片的类型指定为image/jpg
+    # 5. 响应图片验证码
     response = make_response(image)
-    # 设置响应头信息
     response.headers['Content-Type'] = 'image/jpg'
-
-    # 6.响应图片验证码
     return response
+
+# @passport_blue.route('/image_code')
+# def image_code():
+#     """提供图片验证码
+#     1.接受参数（图片验证码唯一标识uuid）
+#     2.校验参数（判断参数是否存在）
+#     3.生成图片验证码
+#     4.存储图片验证码
+#     5.将图片的类型指定为image/jpg
+#     6.响应图片验证码
+#     """
+#     # 1.接受参数（图片验证码唯一标识uuid）
+#     print('hello')
+#     imageCodeId = request.args.get('imageCodeId')
+#
+#     # 2.校验参数（判断参数是否存在）
+#     if not imageCodeId:
+#         abort(403)
+#
+#     # 3.生成图片验证码:text写入到redis,image响应到浏览器
+#     name,text,image = captcha.generate_captcha()
+#
+#     # 4.存储图片验证码
+#     try:
+#         redis_store.set('ImageCode:'+imageCodeId, text, constants.IMAGE_CODE_REDIS_EXPIRES)
+#     except Exception as e:
+#         current_app.logger.error(e)
+#         abort(500)
+#
+#     # 5.将图片的类型指定为image/jpg
+#     response = make_response(image)
+#     # 设置响应头信息
+#     response.headers['Content-Type'] = 'image/jpg'
+#
+#     # 6.响应图片验证码
+#     return response
