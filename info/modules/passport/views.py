@@ -13,6 +13,31 @@ from info.models import User
 import datetime
 
 
+
+@passport_blue.route("/logout",methods=["GET"])
+def logout():
+    """退出登录
+    清空服务器session数据
+    """
+    try:
+        session.pop("user_id", None)
+        session.pop("mobile", None)
+        session.pop("nick_name", None)
+    except Exception as e:
+        current_app.logger.error(e)
+        return jsonify(errno=response_code.RET.DBERR, errmsg='删除session数据失败')
+    return jsonify(errno=response_code.RET.OK, errmsg='退出登录成功')
+
+
+
+
+
+
+
+
+
+
+
 @passport_blue.route("/login", methods=["POST"])
 def login():
     """登录
@@ -122,15 +147,6 @@ def register():
     session['nick_name'] = user.nick_name
     # 8. 响应注册结果
     return jsonify(errno=response_code.RET.OK, errmsg='注册成功')
-
-
-
-
-
-
-
-
-
 
 @passport_blue.route("/sms_code", methods=["POST"])
 def sms_code():

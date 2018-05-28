@@ -1,6 +1,7 @@
 # coding=utf-8
 from logging.handlers import RotatingFileHandler
 from flask import Flask
+from flask.ext.wtf import csrf
 from flask_sqlalchemy import SQLAlchemy
 from flask_wtf.csrf import CSRFProtect
 from flask_session import Session
@@ -41,7 +42,14 @@ def create_app(config_name):
     global redis_store
     redis_store = StrictRedis(host=configs[config_name].REDIS_HOST, port=configs[config_name].REDIS_PORT,decode_responses=True)
     # 开启csrf保护
-    # CSRFProtect(app)
+    CSRFProtect(app)
+    # 业务一开始就准备请求钩子，在每次的请求结束后向浏览器写入cookie
+    @app.after_request
+    def after_request(response):
+        # 生成csrf随机值
+        csrf_token = csrf.generate_csrf()
+        response.set_cookie('csrf_token', csrf_token)
+        return response
     Session(app)
     # 哪里注册蓝图就在哪里导入,避免导入时模块不存在
     from info.modules.index import index_blue

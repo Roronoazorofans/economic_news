@@ -129,6 +129,7 @@ $(function(){
             type:"post",
             data:JSON.stringify(params),
             contentType:'application/json',
+            headers:{'X-CSRFToken':getCookie('csrf_token')},
             success:function (response) {
                 if (response.errno == "0"){
                     alert("登录成功");
@@ -192,6 +193,18 @@ $(function(){
         })
     })
 });
+
+function logout() {
+    $.get('/passport/logout',function (response) {
+        if (response.errno == '0'){
+            // 退出登录成功后刷新当前页面
+            alert(response.errmsg);
+            location.reload();
+        }else {
+            alert(response.errmsg);
+        }
+    })
+}
 
 var imageCodeId = "";
 
