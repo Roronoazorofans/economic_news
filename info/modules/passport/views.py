@@ -13,6 +13,62 @@ from info.models import User
 import datetime
 
 
+@passport_blue.route("/login", methods=["POST"])
+def login():
+    """登录
+    1. 获取参数(手机号,密码明文)
+    2. 校验参数(参数是否缺少,手机号是否合法)
+    3. 查询用户是否存在
+    4. 如果用户存在,校验密码是否正确
+    5. 将状态保持信息写入session
+    6. 保存最后一次登录时间
+    7. 响应登录结果
+    """
+    # 1. 获取参数(手机号,密码明文)
+    json_dict = request.json
+    mobile = json_dict.get("mobile")
+    password = json_dict.get("password")
+    # 2. 校验参数(参数是否缺少,手机号是否合法)
+    if not all([mobile,password]):
+        return jsonify(errno=response_code.RET.PARAMERR, errmsg='缺少参数')
+    if not re.match(r"^1[345678][0-9]{9}$", mobile):
+        return jsonify(errno=response_code.RET.PARAMERR, errmsg='手机号格式错误')
+    # 3. 查询用户是否存在
+    try:
+        user = User.query.filter(User.mobile == mobile).first()
+    except Exception as e:
+        current_app.logger.error(e)
+        return jsonify(errno=response_code.RET.PARAMERR, errmsg='查询用户数据失败')
+    if not user:
+        return jsonify(errno=response_code.RET.NODATA, errmsg='用户名或密码错误')
+    # 4. 如果用户存在,校验密码是否正确
+    if not user.check_passowrd(password):
+        return jsonify(errno=response_code.RET.NODATA, errmsg='用户名或密码错误')
+    # 5. 将状态保持信息写入session
+    session["user_id"] = user.id
+    session["mobile"] = user.mobile
+    session["nick_name"] = user.nick_name
+    # 6. 保存最后一次登录时间
+    user.last_login = datetime.datetime.now()
+    try:
+        db.session.commit()
+    except Exception as e:
+        current_app.logger.error(e)
+        return jsonify(errno=response_code.RET.DBERR, errmsg='更新登录时间失败')
+    # 7. 响应登录结果
+    return jsonify(errno=response_code.RET.OK, errmsg='登录成功')
+
+
+
+
+
+
+
+
+
+
+
+
 @passport_blue.route("/register", methods=["POST"])
 def register():
     """注册

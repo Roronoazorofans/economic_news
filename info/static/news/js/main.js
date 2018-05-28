@@ -120,7 +120,25 @@ $(function(){
         }
 
         // 发起登录请求
-    })
+        var params = {
+            "mobile":mobile,
+            "password":password
+        };
+        $.ajax({
+            url:"/passport/login",
+            type:"post",
+            data:JSON.stringify(params),
+            contentType:'application/json',
+            success:function (response) {
+                if (response.errno == "0"){
+                    alert("登录成功");
+                    location.reload()
+                }else {
+                    alert(response.errmsg)
+                }
+            }
+        })
+    });
 
 
     // TODO 注册按钮点击
