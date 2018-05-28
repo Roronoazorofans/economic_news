@@ -19,14 +19,14 @@ from .xmltojson import xmltojson
 
 
 class REST:
-    AccountSid = '8aaf0708639129c40163a1db5fc20d1c'
-    AccountToken = 'bc5937fb4378492ba8657d67838ddd3a'
-    AppId = '8aaf0708639129c40163a1db60200d23'
+    AccountSid = ''
+    AccountToken = ''
+    AppId = ''
     SubAccountSid = ''
     SubAccountToken = ''
-    ServerIP = 'sandboxapp.cloopen.com'
-    ServerPort = '8883'
-    SoftVersion = '2013-12-26'
+    ServerIP = ''
+    ServerPort = ''
+    SoftVersion = ''
     Iflog = False  # 是否打印日志
     Batch = ''  # 时间戳
     BodyType = 'xml'  # 包体格式，可填值：json 、xml

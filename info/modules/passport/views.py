@@ -1,12 +1,79 @@
 # coding=utf-8
 import random, re, json
 from flask import request, abort, current_app, make_response, jsonify
-from info import constants
+from flask import session
+
+from info import constants, db
 from info import response_code
 from . import passport_blue
 from info.utils.captcha.captcha import captcha
 from info import redis_store
 from info.libs.yuntongxun.sms import CCP
+from info.models import User
+import datetime
+
+
+@passport_blue.route("/register", methods=["POST"])
+def register():
+    """注册
+    1. 获取参数(手机号,短信验证码,密码明文)
+    2. 校验参数(参数是否缺少,手机号是否合法)
+    3. 查询服务器存储的短信验证码
+    4. 对比客户端输入的短信验证码与服务器存储的验证码
+    5. 如果对比成功,创建User模型对象，并赋值属性
+    6. 同步模型对象到数据库
+    7. 将状态保持数据写入session,实现注册即登录
+    8. 响应注册结果
+    """
+    # 1. 获取参数(手机号,短信验证码,密码明文)
+    json_dict = request.json
+    mobile = json_dict.get("mobile")
+    smscode_client = json_dict.get("smscode")
+    password = json_dict.get("password")
+    # 2. 校验参数(参数是否缺少,手机号是否合法)
+    if not all([mobile,password]):
+        return jsonify(errno=response_code.RET.PARAMERR, errmsg='缺少参数')
+    if not re.match(r"^1[345678][0-9]{9}$", mobile):
+        return jsonify(errno=response_code.RET.PARAMERR, errmsg='手机号格式错误')
+    # 3. 查询服务器存储的短信验证码
+    try:
+        smscode_server = redis_store.get("SMS:" +mobile)
+    except Exception as e:
+        current_app.logger.error(e)
+        return jsonify(errno=response_code.RET.DBERR, errmsg='查询短信验证码失败')
+    if not smscode_server:
+        return jsonify(errno=response_code.RET.NODATA, errmsg='短信验证码不存在')
+    # 4. 对比客户端输入的短信验证码与服务器存储的验证码
+    if smscode_client != smscode_server:
+        return jsonify(errno=response_code.RET.PARAMERR, errmsg='输入短信验证码有误')
+    # 5. 如果对比成功,创建User模型对象，并赋值属性
+    user = User()
+    user.mobile = mobile
+    user.nick_name = mobile
+    user.password = password
+    user.last_login = datetime.datetime.now()
+    # 6. 同步模型对象到数据库
+    try:
+        db.session.add(user)
+        db.session.commit()
+    except Exception as e:
+        current_app.logger.error(e)
+        db.session.rollback()
+        return jsonify(errno=response_code.RET.DBERR, errmsg='存储注册数据失败')
+    # 7. 将状态保持数据写入session,实现注册即登录
+    session['user_id'] = user.id
+    session['mobile'] = user.mobile
+    session['nick_name'] = user.nick_name
+    # 8. 响应注册结果
+    return jsonify(errno=response_code.RET.OK, errmsg='注册成功')
+
+
+
+
+
+
+
+
 
 
 @passport_blue.route("/sms_code", methods=["POST"])
@@ -40,9 +107,10 @@ def sms_code():
     if image_code_server.lower() != image_code_client.lower():
         return jsonify(errno=response_code.RET.PARAMERR, errmsg='图⽚验证码输⼊有误')
     sms_code = '%06d' % random.randint(0,999999)
-    result = CCP().send_template_sms(mobile, [sms_code, '5'],'1')
-    if result != 0:
-        return jsonify(errno=response_code.RET.THIRDERR, errmsg='发送短信验证码失败')
+    current_app.logger.debug(sms_code)
+    # result = CCP().send_template_sms(mobile, [sms_code, '5'],'1')
+    # if result != 0:
+    #     return jsonify(errno=response_code.RET.THIRDERR, errmsg='发送短信验证码失败')
     try:
         redis_store.set("SMS:" +mobile, sms_code, constants.SMS_CODE_REDIS_EXPIRES )
     except Exception as e:

@@ -1,6 +1,6 @@
 # -*- coding:utf-8 -*-
 
-from .CCPRestSDK import REST
+from info.libs.yuntongxun.CCPRestSDK import REST
 
 # 说明：主账号，登陆云通讯网站后，可在"控制台-应用"中看到开发者主账号ACCOUNT SID
 _accountSid = '8aaf0708639129c40163a1db5fc20d1c'
@@ -72,4 +72,4 @@ class CCP(object):
 if __name__ == '__main__':
     ccp = CCP()
     # 注意： 测试的短信模板编号为1
-    ccp.send_template_sms('your mobile number', ['666', 5], 1)
+    ccp.send_template_sms('15386814143', ['666', '5'], 1)

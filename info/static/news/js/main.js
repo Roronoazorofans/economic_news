@@ -152,9 +152,26 @@ $(function(){
             $("#register-password-err").show();
             return;
         }
-
+        var params = {
+            "mobile":mobile,
+            "smscode":smscode,
+            "password":password
+        };
         // 发起注册请求
-
+        $.ajax({
+            url:'/passport/register',
+            type:'post',
+            data:JSON.stringify(params),
+            contentType:'application/json',
+            success:function (response) {
+                if (response.errno == '0'){
+                    alert("注册成功")
+                    location.reload()
+                }else {
+                    alert(response.errmsg)
+                }
+            }
+        })
     })
 });
 
@@ -210,6 +227,25 @@ function sendSMSCode() {
             }
         }
     });
+    // 发送成功后，进⾏行行倒计时
+    var num = 15;
+    var t = setInterval(function () {
+    if (num == 1) {
+    // 倒计时完成,清除定时器器
+    clearInterval(t);
+    // 重新⽣生成验证码
+    generateImageCode();
+    // 重置内容
+    $(".get_code").html('点击获取验证码');
+    // 重新添加点击事件
+    $(".get_code").attr("onclick", "sendSMSCode();");
+    } else {
+    // 正在倒计时，显示秒数
+    $(".get_code").html(num + '秒');
+    }
+    // 每⼀一秒减⼀一
+    num -= 1;
+    }, 1000);
 }
 
 // 调用该函数模拟点击左侧按钮
