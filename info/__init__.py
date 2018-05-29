@@ -1,14 +1,16 @@
 # coding=utf-8
+import logging
 from logging.handlers import RotatingFileHandler
+
 from flask import Flask
 from flask.ext.wtf import csrf
+from flask_session import Session
 from flask_sqlalchemy import SQLAlchemy
 from flask_wtf.csrf import CSRFProtect
-from flask_session import Session
-from config import configs
-import logging
-
 from redis import StrictRedis
+
+from config import configs
+from info.utils.comment import do_rank
 
 # 对全局db的处理,请看SQLAlchemy源代码
 # 创建SQLAlchemy对象
@@ -50,6 +52,12 @@ def create_app(config_name):
         csrf_token = csrf.generate_csrf()
         response.set_cookie('csrf_token', csrf_token)
         return response
+
+    # 将自定义过滤器函数, 转成模板中可以直接使用的过滤器
+    app.add_template_filter(do_rank, "rank")
+
+
+
     Session(app)
     # 哪里注册蓝图就在哪里导入,避免导入时模块不存在
     from info.modules.index import index_blue
