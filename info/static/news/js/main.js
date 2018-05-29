@@ -182,6 +182,7 @@ $(function(){
             type:'post',
             data:JSON.stringify(params),
             contentType:'application/json',
+            headers:{'X-CSRFToken':getCookie('csrf_token')},
             success:function (response) {
                 if (response.errno == '0'){
                     alert("注册成功")
@@ -241,15 +242,16 @@ function sendSMSCode() {
         'mobile':mobile,
         'image_code':imageCode,
         'image_code_id':imageCodeId
-    };
+    }
 
 
     // TODO 发送短信验证码
     $.ajax({
         url:"/passport/sms_code",
-        type:'post',
+        type:"POST",
         data:JSON.stringify(params),
         contentType:'application/json',
+        headers:{'X-CSRFToken':getCookie('csrf_token')},
         success:function (response) {
             if(response.errno == '0'){
                 alert("发送短信验证码成功")
