@@ -3,9 +3,9 @@ import logging
 from logging.handlers import RotatingFileHandler
 
 from flask import Flask
-from flask.ext.wtf import csrf
 from flask_session import Session
 from flask_sqlalchemy import SQLAlchemy
+from flask_wtf import csrf
 from flask_wtf.csrf import CSRFProtect
 from redis import StrictRedis
 
