@@ -16,9 +16,9 @@ def index_news_list():
     5. 响应新闻数据
     """
     # 1. 获取参数：新闻分类id,当前展示第几页，每页展示多少条,如果不传数据,就使用默认值
-    cid = request.args.get("cid","1")
-    page = request.args.get("page","1")
-    per_page = request.args.get("per_page","10")
+    cid = request.args.get("cid", "1")
+    page = request.args.get("page", "1")
+    per_page = request.args.get("per_page", "10")
 
     # 2. 校验参数，要求参数必须是整数
     try:

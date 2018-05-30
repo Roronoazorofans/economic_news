@@ -53,9 +53,11 @@ function updateNewsData() {
         'cid':currentCid,
         'page':cur_page
     //    不需要传入per_page,因为默认10
-    }
+    };
     $.get('/news_list',params,function (response) {
         if (response.errno=='0'){
+            // 先清空原有数据
+            $(".list_con").html('');
         //    获取数据成功,使用新的数据渲染界面
             for (var i=0;i<response.data.news_dict_list.length;i++) {
                 var news = response.data.news_dict_list[i]
