@@ -10,7 +10,6 @@ from flask_wtf.csrf import CSRFProtect
 from redis import StrictRedis
 
 from config import configs
-from info.utils.comment import do_rank
 
 # 对全局db的处理,请看SQLAlchemy源代码
 # 创建SQLAlchemy对象
@@ -54,6 +53,7 @@ def create_app(config_name):
         return response
 
     # 将自定义过滤器函数, 转成模板中可以直接使用的过滤器
+    from info.utils.comment import do_rank
     app.add_template_filter(do_rank, "rank")
 
 

@@ -1,11 +1,11 @@
 # coding=utf-8
 from info import response_code
 from . import index_blue
-from flask import render_template, current_app, request, jsonify
+from flask import render_template, current_app, request, jsonify, g
 from info import redis_store,constants
 from info.models import User, News, Category
 from flask import session
-
+from info.utils.comment import user_login_data
 @index_blue.route("/news_list")
 def index_news_list():
     """提供主页新闻列表数据
