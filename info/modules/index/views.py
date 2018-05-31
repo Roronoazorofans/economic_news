@@ -3,7 +3,7 @@ from info import response_code
 from . import index_blue
 from flask import render_template, current_app, request, jsonify
 from info import redis_store,constants
-from info.models import User, News
+from info.models import User, News, Category
 from flask import session
 
 @index_blue.route("/news_list")
@@ -82,10 +82,15 @@ def index():
     except Exception as e:
         current_app.logger.error(e)
 
+    # 3. 查询所有新闻分类
+    categories = Category.query.all()
+
+
     # 构造模板上下文
     context = {
         'user':user,
-        'news_clicks':news_clicks
+        'news_clicks':news_clicks,
+        'categories':categories
     }
 
     # 主页渲染
