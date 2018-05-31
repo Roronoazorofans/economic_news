@@ -24,7 +24,7 @@ $(function () {
             total_page = 1
             updateNewsData()
         }
-    })
+    });
 
     //页面滚动加载相关
     $(window).scroll(function () {
@@ -43,9 +43,21 @@ $(function () {
 
         if ((canScrollHeight - nowScroll) < 100) {
             // TODO 判断页数，去更新新闻数据
+
+            // 当没有正在加载数据时,再加载数据
+            if (!data_querying){
+                // 将是否正在加载数据置为true,表示正在加载数据
+                data_querying = true;
+                // 当当前页数小于总页数时,当前页数加1, 调用更新数据的方法
+                cur_page += 1;
+                if (cur_page < total_page){
+                    updateNewsData()
+                }
+
+            }
         }
     })
-})
+});
 
 function updateNewsData() {
     // TODO 更新新闻数据
@@ -55,9 +67,17 @@ function updateNewsData() {
     //    不需要传入per_page,因为默认10
     };
     $.get('/news_list',params,function (response) {
+        // 能够执行到这里说明数据加载完成,有可能成功也有可能失败
+        // 将是否正在加载数据标记置为false
+            data_querying = false;
         if (response.errno=='0'){
-            // 先清空原有数据
-            $(".list_con").html('');
+            // 记录总页数
+            total_page = response.data.total_page;
+            // 只有当当前页为第一页时清空原有数据
+            if (cur_page == 1){
+                $(".list_con").html('');
+            }
+
         //    获取数据成功,使用新的数据渲染界面
             for (var i=0;i<response.data.news_dict_list.length;i++) {
                 var news = response.data.news_dict_list[i]
