@@ -222,11 +222,23 @@ def news_detail(news_id):
         comments = Comment.query.filter(Comment.news_id == news_id).order_by(Comment.create_time.desc()).all()
     except Exception as e:
         current_app.logger.error(e)
+    comment_like_ids = []
+    if user:
+        try:
+            # 查询该用户点赞了哪些评论
+            comment_likes = CommentLike.query.filter(CommentLike.user_id == user.id).all()
+            comment_like_ids = [comment_like.comment_id for comment_like in comment_likes]
+        except Exception as e:
+            current_app.logger.error(e)
     comment_dict_list = []
     for comment in comments:
+        # 给评论字典增加一个key,记录该评论是否被点赞
+        comment_dict = comment.to_dict()
+        # 默认未点赞
+        comment_dict['is_like'] = False
+        if comment.id in comment_like_ids:
+            comment_dict['is_like'] = True
         comment_dict_list.append(comment.to_dict())
-
-
     context = {
         "user":user,
         "news_clicks":news_clicks,
