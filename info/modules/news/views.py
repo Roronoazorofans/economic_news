@@ -1,14 +1,51 @@
 # coding=utf-8
 from . import news_blue
-from flask import render_template, session, current_app, g, abort
+from flask import render_template, session, current_app, g, abort, jsonify, request
 from info.models import User, News
-from info import constants, db
+from info import constants, db, response_code
 from info.utils.comment import user_login_data
 
-@news_blue.route('/news_collect')
+@news_blue.route('/news_collect',methods=['POST'])
 @user_login_data
 def news_collect():
-    pass
+    """只有在用户登录下才能收藏
+
+    """
+    # 获取用户信息
+    user = g.user
+    if not user:
+        return jsonify(errno=response_code.RET.SESSIONERR, errmsg='用户未登录')
+    # 接受参数
+    news_id = request.json.get("news_id")
+    action = request.json.get("action")
+    # 校验参数
+    if not all([news_id, action]):
+        return jsonify(errno=response_code.RET.NODATA, errmsg='缺少参数')
+    if action not in ["collect","cancel_collect"]:
+        return jsonify(errno=response_code.RET.DATAERR, errmsg='参数错误')
+    # 查询当前要收藏的新闻是否存在
+    try:
+        news = News.query.get(news_id)
+    except Exception as e:
+        current_app.logger.error(e)
+        return jsonify(errno=response_code.RET.DBERR, errmsg='查询新闻数据失败')
+
+    if not news:
+        return jsonify(errno=response_code.RET.NODATA, errmsg='新闻不存在')
+    # 如果当前action为collect，只有当前新闻不在用户的收藏列表中，才执行收藏新闻
+    if action == "collect":
+        if news not in user.collection_news:
+            user.collection_news.append(news)
+    else:
+        if news in user.collection_news:
+            user.collection_news.remove(news)
+    try:
+        db.session.commit()
+    except Exception as e:
+        current_app.logger.error(e)
+        db.session.rollback()
+        return jsonify(errno=response_code.RET.DBERR, errmsg='操作失败')
+    return jsonify(errno=response_code.RET.OK, errmsg='OK')
 
 
 

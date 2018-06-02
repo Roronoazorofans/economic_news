@@ -49,8 +49,8 @@ $(function () {
                 // 将是否正在加载数据置为true,表示正在加载数据
                 data_querying = true;
                 // 当当前页数小于总页数时,当前页数加1, 调用更新数据的方法
-                cur_page += 1;
                 if (cur_page < total_page){
+                    cur_page += 1;
                     updateNewsData()
                 }
 
