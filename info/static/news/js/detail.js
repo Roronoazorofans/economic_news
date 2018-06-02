@@ -190,7 +190,7 @@ $(function(){
                 type: "post",
                 contentType: "application/json",
                 headers: {
-                    "X-CSRFToken": getCookie("csrf_token")
+                    "X-CSRFToken": getCookie("csrf_tok   en")
                 },
                 data: JSON.stringify(params),
                 success: function (resp) {
