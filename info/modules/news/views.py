@@ -31,10 +31,11 @@ def comment_like():
         return jsonify(errno=response_code.RET.DBERR, errmsg='查询评论数据失败')
     if not comment:
         return jsonify(errno=response_code.RET.NODATA, errmsg='评论不存在')
+
+        # 要先查询是否点赞了,如果没有点赞才执行点赞操作
+    comment_like_model = CommentLike.query.filter(CommentLike.user_id == user.id, CommentLike.comment_id == comment_id).first()
     # 当执行点赞操作时:
     if action == 'add':
-        # 要先查询是否点赞了,如果没有点赞才执行点赞操作
-        comment_like_model = CommentLike.query.filter(CommentLike.user_id == user.id, CommentLike.comment_id == comment_id).first()
         if not comment_like_model:
             # 创建模型对象添加属性
             comment_like_model = CommentLike()
@@ -45,9 +46,6 @@ def comment_like():
             # 增加点赞条数
             comment.like_count += 1
     else:
-        # 要先查询是否点赞了,如果有点赞才执行取消点赞操作
-        comment_like_model = CommentLike.query.filter(CommentLike.user_id == user.id,
-                                                      CommentLike.comment_id == comment_id).first()
         if comment_like_model:
             # 删除对象
             db.session.delete(comment_like_model)
@@ -217,7 +215,7 @@ def news_detail(news_id):
 
     # 展示新闻评论数据
     # 根据新闻id查询该新闻的所有评论数据
-    comments = None
+    comments = []
     try:
         comments = Comment.query.filter(Comment.news_id == news_id).order_by(Comment.create_time.desc()).all()
     except Exception as e:
