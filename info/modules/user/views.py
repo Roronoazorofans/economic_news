@@ -1,7 +1,7 @@
 # coding=utf-8
 from . import user_blue
-from flask import render_template
-
+from flask import render_template, g
+from info.utils.comment import user_login_data
 
 
 @user_blue.route('/base_info',methods=['GET','POST'])
@@ -12,8 +12,12 @@ def base_info():
 
 
 @user_blue.route('/info', methods=['GET','POST'])
+@user_login_data
 def user_info():
-    context = {
+    user = g.user
 
+
+    context = {
+        'user':user
     }
     return render_template('news/user.html', context=context)
