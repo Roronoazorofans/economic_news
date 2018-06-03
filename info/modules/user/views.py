@@ -2,7 +2,55 @@
 from . import user_blue
 from flask import render_template, g, redirect, url_for, request, current_app, jsonify, session
 from info.utils.comment import user_login_data
-from info import db, response_code
+from info import db, response_code, constants
+from info.utils.captcha.file_storage import upload_file
+
+@user_blue.route('/pic_info', methods=['GET','POST'])
+@user_login_data
+def pic_info():
+    user = g.user
+    if request.method == 'GET':
+        if user:
+            context = {
+                'user':user.to_dict()
+            }
+            return render_template('news/user_pic_info.html', context=context)
+    if request.method == 'POST':
+        if user:
+            # 上传用户头像
+            # 1.获取到上传的文件
+            try:
+                avartar_file = request.files.get("avatar").read()
+            except Exception as e:
+                current_app.logger.error(e)
+                return jsonify(errno=response_code.RET.PARAMERR, errmsg='读取文件错误')
+
+            # 2.再将文件上传到七牛云
+            try:
+                url = upload_file(avartar_file)
+            except Exception as e:
+                current_app.logger.error(e)
+                return jsonify(errno=response_code.RET.THIRDERR, errmsg='上传图片错误')
+            # 3.将头像信息更新到用户模型中
+            user.avatar_url = url
+            # 4.将存储在七牛云的唯一图片标识url存入数据库中
+            try:
+                db.session.commit()
+            except Exception as e:
+                db.session.rollback()
+                current_app.logger.error(e)
+                return jsonify(errno=response_code.RET.DBERR, errmsg='存储图片数据失败')
+            # 返回结果
+            return jsonify(errno=response_code.RET.OK, errmsg='上传成功', data={"avatar_url": constants.QINIU_DOMIN_PREFIX + url})
+
+
+
+
+
+
+
+
+
 
 
 @user_blue.route('/base_info', methods=['GET','POST'])
