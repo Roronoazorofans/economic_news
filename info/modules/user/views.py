@@ -4,7 +4,72 @@ from flask import render_template, g, redirect, url_for, request, current_app, j
 from info.utils.comment import user_login_data
 from info import db, response_code, constants
 from info.utils.captcha.file_storage import upload_file
-from info.models import News
+from info.models import News, Category
+
+
+@user_blue.route('/news_release', methods=['GET','POST'])
+@user_login_data
+def news_release():
+    """新闻发布"""
+    user = g.user
+    if not user:
+        return redirect(url_for('index.index'))
+    if request.method == 'GET':
+        # 展示全部分类(不包含最新)
+        categories = Category.query.all()
+        # 将‘最新’删除
+        categories.pop(0)
+        # 构造响应数据
+        context = {
+            'categories': categories
+        }
+        # 渲染模板
+        return render_template('news/user_news_release.html', context=context)
+    if request.method == 'POST':
+        # 1. 接受参数(title,category_id,digest,index_image,content)
+        title = request.form.get('title')
+        source = '个人发布'
+        category_id = request.form.get('category_id')
+        digest = request.form.get('digest')
+        index_image = request.files.get('index_image')
+        content = request.form.get('content')
+        # 2. 校验参数
+        if not all([title,category_id,digest,index_image,content]):
+            return jsonify(errno=response_code.RET.PARAMERR, errmsg='参数有误')
+        # 尝试读取图片
+        try:
+            index_image = index_image.read()
+        except Exception as e:
+            current_app.logger.error(e)
+            return jsonify(errno=response_code.RET.PARAMERR, errmsg='参数有误')
+        # 将图片上传到七牛云
+        try:
+            key = upload_file(index_image)
+        except Exception as e:
+            current_app.logger.error(e)
+            return jsonify(errno=response_code.RET.PARAMERR, errmsg='参数有误')
+        # 3.将新闻数据储存到数据库
+        # 创建新闻对象,并添加属性
+        news = News()
+        news.title = title
+        news.source = source
+        news.category_id = category_id
+        news.digest = digest
+        # 此处必须自己添加url实乃迫不得已,因为新闻网站大部分图片都是爬取的
+        news.index_image_url = constants.QINIU_DOMIN_PREFIX + key
+        news.content = content
+        news.status = 1
+
+        try:
+            db.session.add(news)
+            db.session.commit()
+        except Exception as e:
+            db.session.rollback()
+            current_app.logger.error(e)
+            return jsonify(errno=response_code.RET.DBERR, errmsg='存储数据失败')
+
+        return jsonify(errno=response_code.RET.OK, errmsg='新闻发布成功,等待审核')
+
 
 @user_blue.route('/user_collection')
 @user_login_data
