@@ -6,6 +6,48 @@ from info import db, response_code, constants
 from info.utils.captcha.file_storage import upload_file
 from info.models import News, Category
 
+@user_blue.route('/news_list')
+@user_login_data
+def news_list():
+    """用户新闻列表"""
+    user = g.user
+    if not user:
+        return redirect(url_for('index.index'))
+    # 1. 接受参数(page)
+    page = request.args.get('p','1')
+    # 2. 校验参数
+    try:
+        page = int(page)
+    except Exception as e:
+        current_app.logger.error(e)
+        page = '1'
+    # 3. 查询登录登录用户发布的新闻，并进行分页
+    paginate = None
+    try:
+        paginate = News.query.filter(News.user_id == user.id).paginate(page, constants.USER_COLLECTION_MAX_NEWS, False)
+    except Exception as e:
+        current_app.logger.error(e)
+
+    # 3. 构造响应数据
+    news_list = paginate.items
+    total_page = paginate.pages
+    current_page = paginate.page
+
+    news_dict_list = []
+    for news in news_list:
+        news_dict_list.append(news.to_review_dict())
+
+    context = {
+        'news_list':news_dict_list,
+        'total_page':total_page,
+        'current_page':current_page
+    }
+    # 4.渲染模板
+    return render_template('news/user_news_list.html', context=context)
+
+
+
+
 
 @user_blue.route('/news_release', methods=['GET','POST'])
 @user_login_data
@@ -58,6 +100,7 @@ def news_release():
         # 此处必须自己添加url实乃迫不得已,因为新闻网站大部分图片都是爬取的
         news.index_image_url = constants.QINIU_DOMIN_PREFIX + key
         news.content = content
+        news.user_id = user.id
         news.status = 1
 
         try:
