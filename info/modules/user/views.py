@@ -4,6 +4,44 @@ from flask import render_template, g, redirect, url_for, request, current_app, j
 from info.utils.comment import user_login_data
 from info import db, response_code, constants
 from info.utils.captcha.file_storage import upload_file
+from info.models import News
+
+@user_blue.route('/user_collection')
+@user_login_data
+def user_collection():
+    """用户收藏"""
+    user = g.user
+    if not user:
+        return redirect(url_for('index.index'))
+    # 1.接受参数
+    # 当前查看第几页,如果不传默认是第1页
+    page = request.args.get('p','1')
+    # 2.校验参数
+    try:
+        page = int(page)
+    except Exception as e:
+        current_app.logger.error(e)
+        page = '1'
+
+
+    # 3.查询当前用户的收藏新闻并分页显示
+    paginate = user.collection_news.paginate(page, constants.USER_COLLECTION_MAX_NEWS, False)
+
+    # 4.构造响应数据
+    news_list = paginate.items
+    total_page = paginate.pages
+    current_page = paginate.page
+    news_dict_list = []
+    for news in news_list:
+        news_dict_list.append(news.to_basic_dict())
+    context = {
+        'news_list': news_dict_list,
+        'total_page': total_page,
+        'current_page': current_page
+    }
+
+    return render_template('news/user_collection.html', context=context)
+
 
 @user_blue.route('/pass_info', methods=['GET','POST'])
 @user_login_data
@@ -34,18 +72,9 @@ def pass_info():
                 db.session.rollback()
                 current_app.logger.error(e)
                 return jsonify(errno=response_code.RET.DBERR, errmsg='存储到数据库失败')
+            # TODO: 清除session
             # 5.响应结果
             return jsonify(errno=response_code.RET.OK, errmsg='修改密码成功')
-
-
-
-
-
-
-
-
-
-
 
 
 @user_blue.route('/pic_info', methods=['GET','POST'])
@@ -92,15 +121,6 @@ def pic_info():
             return jsonify(errno=response_code.RET.OK, errmsg='上传成功', data=data)
 
 
-
-
-
-
-
-
-
-
-
 @user_blue.route('/base_info', methods=['GET','POST'])
 @user_login_data
 def base_info():
@@ -142,7 +162,6 @@ def base_info():
 
             # 返回结果
             return jsonify(errno=response_code.RET.OK, errmsg='修改数据成功')
-
 
 
 @user_blue.route('/info')
