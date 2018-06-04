@@ -88,7 +88,7 @@ def index():
 
     # 构造模板上下文
     context = {
-        'user':user,
+        'user':user.to_dict() if user else None,
         'news_clicks':news_clicks,
         'categories':categories
     }

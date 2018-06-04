@@ -69,7 +69,7 @@ def news_comment():
     """只有在用户登录的情况下才能进行评论操作
 
     """
-    user = g.user
+    user = g.user.to_dict()
     if not user:
         return jsonify(errno=response_code.RET.SESSIONERR, errmsg='用户未登录')
     # 接收请求参数 1.被评论新闻id 2.评论内容
@@ -238,7 +238,7 @@ def news_detail(news_id):
             comment_dict['is_like'] = True
         comment_dict_list.append(comment.to_dict())
     context = {
-        "user":user,
+        "user":user.to_dict(),
         "news_clicks":news_clicks,
         "news":news.to_dict(),
         "is_collected":is_collected,

@@ -5,6 +5,33 @@ from info.utils.comment import user_login_data
 from info import db, response_code, constants
 from info.utils.captcha.file_storage import upload_file
 
+@user_blue.route('/pass_info', methods=['GET','POST'])
+@user_login_data
+def pass_info():
+    user = g.user
+    # TODO: 修改密码
+    if request.method == 'GET':
+        if user:
+            return render_template('news/user_pass_info.html')
+    if request.method == 'POST':
+        if user:
+            # 1.接受参数(原密码, 新密码)
+            # 2.校验参数(参数是否齐全,校验原密码是否正确)
+            # 3.修改模型对象属性
+            # 4.将新密码存储到数据库
+            # 5.响应结果
+
+
+
+
+
+
+
+
+
+
+
+
 @user_blue.route('/pic_info', methods=['GET','POST'])
 @user_login_data
 def pic_info():
@@ -17,7 +44,6 @@ def pic_info():
             return render_template('news/user_pic_info.html', context=context)
     if request.method == 'POST':
         if user:
-            # 上传用户头像
             # 1.获取到上传的文件
             try:
                 avartar_file = request.files.get("avatar").read()
@@ -27,12 +53,12 @@ def pic_info():
 
             # 2.再将文件上传到七牛云
             try:
-                url = upload_file(avartar_file)
+                key = upload_file(avartar_file)
             except Exception as e:
                 current_app.logger.error(e)
                 return jsonify(errno=response_code.RET.THIRDERR, errmsg='上传图片错误')
             # 3.将头像信息更新到用户模型中
-            user.avatar_url = url
+            user.avatar_url = key
             # 4.将存储在七牛云的唯一图片标识url存入数据库中
             try:
                 db.session.commit()
@@ -40,8 +66,14 @@ def pic_info():
                 db.session.rollback()
                 current_app.logger.error(e)
                 return jsonify(errno=response_code.RET.DBERR, errmsg='存储图片数据失败')
+
+            # 构造响应数据, 上传头像结束后直接刷新当前头像
+            data = {
+                "avatar_url": constants.QINIU_DOMIN_PREFIX + key
+            }
+
             # 返回结果
-            return jsonify(errno=response_code.RET.OK, errmsg='上传成功', data={"avatar_url": constants.QINIU_DOMIN_PREFIX + url})
+            return jsonify(errno=response_code.RET.OK, errmsg='上传成功', data=data)
 
 
 
@@ -61,7 +93,7 @@ def base_info():
     if request.method == 'GET':
         if user:
             context = {
-                'user':user
+                'user':user.to_dict()
             }
             return render_template('news/user_base_info.html', context=context)
 
@@ -100,12 +132,15 @@ def base_info():
 @user_blue.route('/info')
 @user_login_data
 def user_info():
+    """个人中心入口
+    1. 必须在登录状态下才能进入个人中心
+    """
     user = g.user
     # 如果用户未登录下自动跳转到主页面
     if not user:
         return redirect(url_for('index.index'))
 
     context = {
-        'user':user
+        'user':user.to_dict()
     }
     return render_template('news/user.html', context=context)
