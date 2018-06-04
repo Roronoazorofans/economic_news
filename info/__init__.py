@@ -71,6 +71,8 @@ def create_app(config_name):
     app.register_blueprint(news_blue)
     from info.modules.user import user_blue
     app.register_blueprint(user_blue)
+    from info.modules.admin import admin_blue
+    app.register_blueprint(admin_blue)
 
     # 一定要注意返回app对象!!!
     return app
