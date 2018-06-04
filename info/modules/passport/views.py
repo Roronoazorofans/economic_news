@@ -29,15 +29,6 @@ def logout():
     return jsonify(errno=response_code.RET.OK, errmsg='退出登录成功')
 
 
-
-
-
-
-
-
-
-
-
 @passport_blue.route("/login", methods=["POST"])
 def login():
     """登录
@@ -82,16 +73,6 @@ def login():
         return jsonify(errno=response_code.RET.DBERR, errmsg='更新登录时间失败')
     # 7. 响应登录结果
     return jsonify(errno=response_code.RET.OK, errmsg='登录成功')
-
-
-
-
-
-
-
-
-
-
 
 
 @passport_blue.route("/register", methods=["POST"])
@@ -148,6 +129,7 @@ def register():
     # 8. 响应注册结果
     return jsonify(errno=response_code.RET.OK, errmsg='注册成功')
 
+
 @passport_blue.route("/sms_code", methods=["POST"])
 def sms_code():
     """发送短信验证码
@@ -191,10 +173,6 @@ def sms_code():
     return jsonify(errno=response_code.RET.OK, errmsg='发送短信验证码成功')
 
 
-
-
-
-
 @passport_blue.route("/image_code")
 def image_code():
     """提供图片验证码"""
@@ -216,39 +194,3 @@ def image_code():
     response = make_response(image)
     response.headers['Content-Type'] = 'image/jpg'
     return response
-
-# @passport_blue.route('/image_code')
-# def image_code():
-#     """提供图片验证码
-#     1.接受参数（图片验证码唯一标识uuid）
-#     2.校验参数（判断参数是否存在）
-#     3.生成图片验证码
-#     4.存储图片验证码
-#     5.将图片的类型指定为image/jpg
-#     6.响应图片验证码
-#     """
-#     # 1.接受参数（图片验证码唯一标识uuid）
-#     print('hello')
-#     imageCodeId = request.args.get('imageCodeId')
-#
-#     # 2.校验参数（判断参数是否存在）
-#     if not imageCodeId:
-#         abort(403)
-#
-#     # 3.生成图片验证码:text写入到redis,image响应到浏览器
-#     name,text,image = captcha.generate_captcha()
-#
-#     # 4.存储图片验证码
-#     try:
-#         redis_store.set('ImageCode:'+imageCodeId, text, constants.IMAGE_CODE_REDIS_EXPIRES)
-#     except Exception as e:
-#         current_app.logger.error(e)
-#         abort(500)
-#
-#     # 5.将图片的类型指定为image/jpg
-#     response = make_response(image)
-#     # 设置响应头信息
-#     response.headers['Content-Type'] = 'image/jpg'
-#
-#     # 6.响应图片验证码
-#     return response

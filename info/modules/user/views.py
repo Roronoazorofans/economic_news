@@ -9,17 +9,33 @@ from info.utils.captcha.file_storage import upload_file
 @user_login_data
 def pass_info():
     user = g.user
-    # TODO: 修改密码
+    #  修改密码
     if request.method == 'GET':
         if user:
             return render_template('news/user_pass_info.html')
+        else:
+            return redirect(url_for('index.index'))
     if request.method == 'POST':
         if user:
             # 1.接受参数(原密码, 新密码)
+            old_password = request.json.get('old_password')
+            new_password = request.json.get('new_password')
             # 2.校验参数(参数是否齐全,校验原密码是否正确)
+            if not all([old_password, new_password]):
+                return jsonify(errno=response_code.RET.PARAMERR, errmsg='缺少参数')
+            if not user.check_passowrd(old_password):
+                return jsonify(errno=response_code.RET.PARAMERR, errmsg='参数错误')
             # 3.修改模型对象属性
+            user.password = new_password
             # 4.将新密码存储到数据库
+            try:
+                db.session.commit()
+            except Exception as e:
+                db.session.rollback()
+                current_app.logger.error(e)
+                return jsonify(errno=response_code.RET.DBERR, errmsg='存储到数据库失败')
             # 5.响应结果
+            return jsonify(errno=response_code.RET.OK, errmsg='修改密码成功')
 
 
 
