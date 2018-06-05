@@ -45,17 +45,12 @@ def admin_login():
         if not user.is_admin:
             return render_template('admin/login.html', errmsg='用户权限错误')
 
-        # 写入状态保持信息到session
+        # 4. 写入状态保持信息到session
         session['nick_name'] = user.nick_name
         session['mobile'] = user.mobile
         session['is_admin'] = user.is_admin
         session['user_id'] = user.id
 
-        context = {
-            'nick_name': user.nick_name,
-
-        }
-
 
         # 5. 如果校验通过即进入管理员主界面
-        return render_template('admin/index.html', context=context)
+        return redirect(url_for('admin.admin_index'))
