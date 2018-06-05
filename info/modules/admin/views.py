@@ -4,7 +4,22 @@ from flask import render_template,request, current_app, session, redirect, url_f
 from info.models import User
 from info.utils.comment import user_login_data
 
-@admin_blue.route('/index')
+
+@admin_blue.route('/user_count')
+def user_count():
+    """用户统计量展示"""
+    # 1.统计用户总数
+    user_count = User.query.filter(User.is_admin == False).count()
+    context = {
+        'user_count': user_count
+
+    }
+    return render_template('admin/user_count.html',context=context)
+
+
+
+
+@admin_blue.route('/')
 @user_login_data
 def admin_index():
     user = g.user
