@@ -78,10 +78,34 @@ def user_count():
     except Exception as e:
         current_app.logger.error(e)
 
+    # 4. 活跃用户数量图表展示
+    # 定义空数组，保存数据
+    active_date = []
+    active_count = []
+    # 查询今天开始的时间
+    today_begin = '%d-%02d-%02d' % (t.tm_year, t.tm_mon, t.tm_mday)
+    today_begin_date = datetime.datetime.strptime(today_begin, '%Y-%m-%d')
+    # 计算31天以内的每天间隔
+    for i in range(0, 31):
+        # 计算一天开始
+        begin_date = today_begin_date - datetime.timedelta(days=i)
+        # 计算一天结束
+        end_date = today_begin_date - datetime.timedelta(days=(i - 1))
+        # 计算活跃量
+        count = User.query.filter(User.is_admin == False, User.last_login >= begin_date, User.last_login < end_date).count()
+        # 将数据封装到列表
+        active_count.append(count)
+        active_date.append(datetime.datetime.strftime(begin_date, '%Y-%m-%d'))
+        # 反转⽇期和数量，保证时间线从左⾄至右递增
+    active_count.reverse()
+    active_date.reverse()
+
     context = {
         'total_count': total_count,
         'month_count': month_count,
-        'day_count': day_count
+        'day_count': day_count,
+        'active_count': active_count,
+        'active_date': active_date
 
     }
     return render_template('admin/user_count.html',context=context)
