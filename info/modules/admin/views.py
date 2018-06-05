@@ -16,7 +16,7 @@ def user_count():
     except Exception as e:
         current_app.logger.error(e)
 
-    # 2.用户月新增数 从6月1日算起 2018-06-01
+    # 2.用户月新增数  创建日期大于 2018-06-01 0:00:00
     month_count = 0
     # 2.1 生成当地时间
     t = time.localtime()
@@ -30,14 +30,19 @@ def user_count():
     except Exception as e:
         current_app.logger.error(e)
 
-    # 3. 用户日新增数
-
-
-
+    # 3. 用户日新增数  从2018-06-05 0:00:00 <= 注册日期 < 2018-06-05 24:00:00
+    day_count = 0
+    day_begin = "%d-%02d-%d" % (t.tm_year, t.tm_mon, t.tm_mday)
+    day_begin_date = datetime.datetime.strptime(day_begin, '%Y-%m-%d')
+    try:
+        day_count = User.query.filter(User.create_time > day_begin_date, User.is_admin==False).count()
+    except Exception as e:
+        current_app.logger.error(e)
 
     context = {
         'total_count': total_count,
-        'month_count': month_count
+        'month_count': month_count,
+        'day_count': day_count
 
     }
     return render_template('admin/user_count.html',context=context)
