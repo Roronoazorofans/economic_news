@@ -4,6 +4,45 @@ from flask import render_template,request, current_app, session, redirect, url_f
 from info.models import User
 from info.utils.comment import user_login_data
 import time,datetime
+from info import constants
+
+@admin_blue.route('/user_list')
+def user_list():
+    """用户列表"""
+    # 查询用户列表并按照最后一次登录时间倒序分页展示
+    page = request.args.get('p','1')
+    try:
+        page = int(page)
+    except Exception as e:
+        current_app.logger.error(e)
+        page = 1
+    paginate = None
+    try:
+        user_actives = User.query.filter(User.is_admin==False).order_by(User.last_login.desc())
+    except Exception as e:
+        current_app.logger.error(e)
+        return render_template('admin/user_list.html', errmsg='查询用户数据失败')
+    if user_actives:
+        paginate = user_actives.paginate(page, constants.ADMIN_USER_PAGE_MAX_COUNT, False)
+    # 构造响应数据
+    user_active_list = paginate.items
+    total_page = paginate.pages
+    current_page = paginate.page
+    user_active_dict_list = []
+    for user in user_active_list:
+        user_active_dict_list.append(user.to_admin_dict())
+
+    context = {
+        'users': user_active_dict_list,
+        'total_page': total_page,
+        'current_page': current_page
+    }
+
+    return render_template('admin/user_list.html', context=context)
+
+
+
+
 
 @admin_blue.route('/user_count')
 def user_count():
