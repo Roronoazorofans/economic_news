@@ -3,15 +3,41 @@ from info.modules.admin import admin_blue
 from flask import render_template,request, current_app, session, redirect, url_for, g
 from info.models import User
 from info.utils.comment import user_login_data
-
+import time,datetime
 
 @admin_blue.route('/user_count')
 def user_count():
     """用户统计量展示"""
     # 1.统计用户总数
-    user_count = User.query.filter(User.is_admin == False).count()
+    total_count = 0
+    try:
+        # 管理员不在统计内
+        total_count = User.query.filter(User.is_admin == False).count()
+    except Exception as e:
+        current_app.logger.error(e)
+
+    # 2.用户月新增数 从6月1日算起 2018-06-01
+    month_count = 0
+    # 2.1 生成当地时间
+    t = time.localtime()
+    # 2.2 生成当前月份开始时间字符串
+    month_begin = "%d-%02d-01" % (t.tm_year, t.tm_mon)
+    # 2.3 生成当前月份开始时间对象
+    month_begin_date = datetime.datetime.strptime(month_begin, '%Y-%m-%d')
+    # 2.4 查询注册时间大于当前月份开始时间的数量
+    try:
+        month_count = User.query.filter(User.create_time > month_begin_date,User.is_admin==False).count()
+    except Exception as e:
+        current_app.logger.error(e)
+
+    # 3. 用户日新增数
+
+
+
+
     context = {
-        'user_count': user_count
+        'total_count': total_count,
+        'month_count': month_count
 
     }
     return render_template('admin/user_count.html',context=context)
