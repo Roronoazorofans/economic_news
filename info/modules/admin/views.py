@@ -7,6 +7,56 @@ import time,datetime
 from info import constants,response_code
 from info.utils.captcha.file_storage import upload_file
 
+@admin_blue.route('/news_category', methods=['GET','POST'])
+def news_category():
+    if request.method == 'GET':
+        # 查询分类并展示
+        try:
+            categories = Category.query.all()
+        except Exception as e:
+            current_app.logger.error(e)
+            return jsonify(errno=response_code.RET.DBERR, errmsg='查询数据失败')
+        if not categories:
+            return jsonify(errno=response_code.RET.NODATA, errmsg='查询分类不存在')
+        categories.pop(0)
+        context = {
+            'categories': categories
+        }
+        return render_template('admin/news_type.html', context=context)
+
+    if request.method == 'POST':
+        # 接受参数
+        cname = request.json.get('name')
+        cid = request.json.get('id')
+        # 校验参数
+        if not cname:
+            return jsonify(errno=response_code.RET.PARAMERR, errmsg='缺少参数')
+
+        # 如果cid存在,判断修改的cid的对应的分类名字是否存在
+        if cid:
+            try:
+                category = Category.query.get(cid)
+            except Exception as e:
+                current_app.logger.error(e)
+                return jsonify(errno=response_code.RET.DBERR, errmsg='查询数据失败')
+            if not category:
+                return jsonify(errno=response_code.RET.NODATA, errmsg='查询分类不存在')
+            # 修改分类名字
+            category.name = cname
+        else:
+            # 创建新的分类对象
+            category = Category()
+            category.name = cname
+            db.session.add(category)
+            # 存储到数据库
+        try:
+            db.session.commit()
+        except Exception as e:
+            db.session.rollback()
+            current_app.logger.error(e)
+            return jsonify(errno=response_code.RET.DBERR, errmsg='存储数据失败')
+        return jsonify(errno=response_code.RET.OK, errmsg='OK')
+
 
 @admin_blue.route('/news_edit_detail/<int:news_id>', methods=['GET','POST'])
 def news_edit_detail(news_id):
