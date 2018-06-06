@@ -2,14 +2,15 @@
 import logging
 from logging.handlers import RotatingFileHandler
 
-from flask import Flask
+from flask import Flask, render_template,g
 from flask_session import Session
 from flask_sqlalchemy import SQLAlchemy
 from flask_wtf import csrf
 from flask_wtf.csrf import CSRFProtect
 from redis import StrictRedis
-
 from config import configs
+
+
 
 # 对全局db的处理,请看SQLAlchemy源代码
 # 创建SQLAlchemy对象
@@ -51,6 +52,17 @@ def create_app(config_name):
         csrf_token = csrf.generate_csrf()
         response.set_cookie('csrf_token', csrf_token)
         return response
+
+    from info.utils.comment import user_login_data
+    @app.errorhandler(404)
+    @user_login_data
+    def page_not_found(e):
+        user = g.user
+        if user:
+            context = {
+                'user': user.to_dict() if user else None
+            }
+            return render_template('news/404.html', context=context)
 
     # 将自定义过滤器函数, 转成模板中可以直接使用的过滤器
     from info.utils.comment import do_rank

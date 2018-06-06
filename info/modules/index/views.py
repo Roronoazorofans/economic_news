@@ -61,20 +61,12 @@ def index_news_list():
 
 
 @index_blue.route("/")
+@user_login_data
 def index():
     """主页"""
     # 测试数据库
     # redis_store.set("name","zjg")
-
-    # 1. 获取用户的状态保持信息，用于获取用户的登录信息
-
-    user_id = session.get("user_id", None)
-    user = None
-    if user_id:
-        try:
-            user = User.query.get(user_id)
-        except Exception as e:
-            current_app.logger.error(e)
+    user = g.user
     # 2. 获取新闻点击排行数据
     news_clicks = None
     try:
