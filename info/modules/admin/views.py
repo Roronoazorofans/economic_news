@@ -6,6 +6,46 @@ from info.utils.comment import user_login_data
 import time,datetime
 from info import constants,response_code
 
+
+@admin_blue.route('/news_edit')
+def news_edit():
+    # 获取参数
+    page = request.args.get('p','1')
+    key_word = request.args.get('keyword')
+    try:
+        page = int(page)
+    except Exception as e:
+        page = 1
+    # 查询审核通过的新闻
+    news_list = []
+    total_page = 1
+    current_page = 1
+    try:
+        if key_word:
+            paginate = News.query.filter(News.status == 0, News.title.contains(key_word)).order_by(News.create_time.desc()).paginate(page, constants.ADMIN_NEWS_PAGE_MAX_COUNT, False)
+        else:
+            paginate = News.query.filter(News.status == 0).order_by(News.create_time.desc()).paginate(page,constants.ADMIN_NEWS_PAGE_MAX_COUNT,False)
+        # 构造响应数据
+        news_list = paginate.items
+        total_page = paginate.pages
+        current_page = paginate.page
+    except Exception as e:
+        current_app.logger.error(e)
+        abort(404)
+    news_dict_list = []
+    for news in news_list:
+        news_dict_list.append(news.to_dict())
+    context = {
+        'news_list':news_dict_list,
+        'total_page':total_page,
+        'current_page':current_page
+    }
+    return render_template('admin/news_edit.html', context=context)
+
+
+
+
+
 @admin_blue.route('/news_review_detail/<int:news_id>', methods=['GET','POST'])
 def news_review_detail(news_id):
     if request.method == 'GET':

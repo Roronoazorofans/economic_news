@@ -31,10 +31,10 @@ def index_news_list():
 
     if cid == 1:
         # 当传入的新闻分类是1，查询所有分类的新闻，根据新闻发布的时间倒序，分页
-        paginate = News.query.order_by(News.create_time.desc()).paginate(page,per_page,False)
+        paginate = News.query.filter(News.status==0).order_by(News.create_time.desc()).paginate(page,per_page,False)
     else:
         # 当传入的新闻分类不是1，查询当前分类的新闻，根据新闻发布的时间倒序，分页
-        paginate = News.query.filter(News.category_id==cid).order_by(News.create_time.desc()).paginate(page, per_page, False)
+        paginate = News.query.filter(News.category_id==cid,News.status==0).order_by(News.create_time.desc()).paginate(page, per_page, False)
     # 4.构造响应的新闻数据
     # 4.1 获取paginate的模型对象
     news_list = paginate.items
