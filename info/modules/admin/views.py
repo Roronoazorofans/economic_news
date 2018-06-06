@@ -1,10 +1,85 @@
 # coding=utf-8
 from info.modules.admin import admin_blue
 from flask import render_template,request,current_app,session,redirect,url_for,g,abort,jsonify
-from info.models import User, News, db
+from info.models import User, News, db, Category
 from info.utils.comment import user_login_data
 import time,datetime
 from info import constants,response_code
+from info.utils.captcha.file_storage import upload_file
+
+
+@admin_blue.route('/news_edit_detail/<int:news_id>', methods=['GET','POST'])
+def news_edit_detail(news_id):
+    if request.method == 'GET':
+        news = None
+        try:
+            news = News.query.get(news_id)
+        except Exception as e:
+            current_app.logger.error(e)
+            abort(404)
+        if not news:
+            abort(404)
+
+        categories = []
+        try:
+            categories = Category.query.all()
+            categories.pop(0)
+        except Exception as e:
+            current_app.logger.error(e)
+            abort(404)
+        context = {
+            'news': news,
+            'categories': categories
+        }
+
+        return render_template('admin/news_edit_detail.html', context=context)
+
+    if request.method == 'POST':
+        # 1.获取参数
+        title = request.form.get('title')
+        category_id = request.form.get('category_id')
+        digest = request.form.get('digest')
+        index_image = request.files.get('index_image')
+        content = request.form.get('content')
+        # 2.校验参数
+        if not all([title,category_id,digest,content]):
+            return jsonify(errno=response_code.RET.PARAMERR, errmsg='参数错误')
+        # 3.查询要编辑的新闻
+        news = None
+        try:
+            news = News.query.get(news_id)
+        except Exception as e:
+            current_app.logger.error(e)
+            abort(404)
+        if not news:
+            abort(404)
+        # 4.上传图片到七牛云
+        if index_image:
+            try:
+                index_image = index_image.read() # 读取图片数据为二进制数据
+            except Exception as e:
+                current_app.logger.error(e)
+                abort(404)
+            try:
+                key = upload_file(index_image)
+            except Exception as e:
+                current_app.logger.error(e)
+                return jsonify(errno=response_code.RET.THIRDERR, errmsg='上传失败')
+            news.index_image_url = constants.QINIU_DOMIN_PREFIX + key
+        # 5.存储到数据库
+        news.title = title
+        news.category_id = category_id
+        news.digest = digest
+        news.content = content
+
+        try:
+            db.session.commit()
+        except Exception as e:
+            db.session.rollback()
+            current_app.logger.error(e)
+            return jsonify(errno=response_code.RET.DBERR, errmsg='存储到数据库失败')
+
+        return jsonify(errno=response_code.RET.OK, errmsg='操作成功')
 
 
 @admin_blue.route('/news_edit')
