@@ -30,7 +30,7 @@ def user_list():
     current_page = paginate.page
     user_active_dict_list = []
     for user in user_active_list:
-        user_active_dict_list.append(user.to_admin_dict())
+        user_active_dict_list.append(user.to_admin_dict() if user_active_list else None)
 
     context = {
         'users': user_active_dict_list,
@@ -95,8 +95,9 @@ def user_count():
         count = User.query.filter(User.is_admin == False, User.last_login >= begin_date, User.last_login < end_date).count()
         # 将数据封装到列表
         active_count.append(count)
+        # 将时间对象转成时间字符串
         active_date.append(datetime.datetime.strftime(begin_date, '%Y-%m-%d'))
-        # 反转⽇期和数量，保证时间线从左⾄至右递增
+    # 反转⽇期和数量，保证时间线从左⾄至右递增
     active_count.reverse()
     active_date.reverse()
 
