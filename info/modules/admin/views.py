@@ -1,10 +1,55 @@
 # coding=utf-8
 from info.modules.admin import admin_blue
 from flask import render_template,request, current_app, session, redirect, url_for, g
-from info.models import User
+from info.models import User, News
 from info.utils.comment import user_login_data
 import time,datetime
 from info import constants
+
+
+@admin_blue.route('/news_review')
+def news_review():
+    """新闻审核"""
+    # 1. 接受参数
+    page = request.args.get('p','1')
+    keyword = request.args.get('keyword') # 关键字查询参数接收
+    # 2. 校验参数
+    try:
+        page = int(page)
+    except Exception as e:
+        page = 1
+    # 3. 查询所有除审核通过的新闻并分页展示
+    paginate = None
+    try:
+        if keyword:
+            paginate = News.query.filter(News.status != 0, News.title.contains(keyword)).order_by(News.create_time.desc()).paginate(page, constants.ADMIN_NEWS_PAGE_MAX_COUNT, False)
+        else:
+            paginate = News.query.filter(News.status != 0).order_by(News.create_time.desc()).paginate(page, constants.ADMIN_NEWS_PAGE_MAX_COUNT, False)
+    except Exception as e:
+        current_app.logger.error(e)
+    # 4. 构造响应数据
+    news_list = []
+    total_page = 1
+    current_page = 1
+    if paginate:
+        news_list = paginate.items
+        total_page = paginate.pages
+        current_page = paginate.page
+    news_dict_list = []
+    for news in news_list:
+        news_dict_list.append(news.to_review_dict())
+
+    context = {
+        'news_list': news_dict_list,
+        'total_page': total_page,
+        'current_page': current_page
+    }
+
+    return render_template('admin/news_review.html', context=context)
+
+
+
+
 
 @admin_blue.route('/user_list')
 def user_list():
