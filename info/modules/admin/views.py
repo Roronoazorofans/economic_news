@@ -1,10 +1,75 @@
 # coding=utf-8
 from info.modules.admin import admin_blue
-from flask import render_template,request, current_app, session, redirect, url_for, g
-from info.models import User, News
+from flask import render_template,request,current_app,session,redirect,url_for,g,abort,jsonify
+from info.models import User, News, db
 from info.utils.comment import user_login_data
 import time,datetime
-from info import constants
+from info import constants,response_code
+
+@admin_blue.route('/news_review_detail/<int:news_id>', methods=['GET','POST'])
+def news_review_detail(news_id):
+    if request.method == 'GET':
+        # 1. 接受参数
+        # 2. 根据参数查询新闻
+        news = None
+        try:
+            news = News.query.get(news_id)
+        except Exception as e:
+            current_app.logger.error(e)
+            abort(404)
+        if not news:
+            abort(404)
+        #
+        context = {
+            'news': news.to_dict()
+
+        }
+
+        return render_template('admin/news_review_detail.html', context=context)
+    if request.method == 'POST':
+        # 1. 接受参数
+        action = request.json.get('action')
+        # 2. 校验参数
+        if not action:
+            return jsonify(errno=response_code.RET.PARAMERR, errmsg='参数错误')
+        if action not in ['accept','reject']:
+            return jsonify(errno=response_code.RET.PARAMERR, errmsg='参数错误')
+        # 3. 查询要审核的新闻是否存在
+        try:
+            news = News.query.get(news_id)
+        except Exception as e:
+            current_app.logger.error(e)
+            return jsonify(errno=response_code.RET.DBERR, errmsg='查询数据失败')
+        if not news:
+            return jsonify(errno=response_code.RET.NODATA, errmsg='查询的新闻不存在')
+
+        # 3.判断action
+        # 3.1 如果审核通过
+        if action == 'accept':
+            # 将status置为0
+            news.status = 0
+        # 审核不通过
+        else:
+            news.status = -1
+            # 保存拒绝的理由
+            reason = request.json.get('reason')
+            if not reason:
+                return jsonify(errno=response_code.RET.PARAMERR, errmsg='请填写拒绝通过原因')
+            news.reason = reason
+        # 上传到数据库
+        try:
+            db.session.commit()
+        except Exception as e:
+            db.session.rollback()
+            current_app.logger.error(e)
+            return jsonify(errno=response_code.RET.DBERR, errmsg='存储数据失败')
+        return jsonify(errno=response_code.RET.OK, errmsg='操作成功')
+
+
+
+
+
+
 
 
 @admin_blue.route('/news_review')
@@ -19,22 +84,22 @@ def news_review():
     except Exception as e:
         page = 1
     # 3. 查询所有除审核通过的新闻并分页展示
-    paginate = None
+    news_list = []
+    total_page = 1
+    current_page = 1
     try:
         if keyword:
             paginate = News.query.filter(News.status != 0, News.title.contains(keyword)).order_by(News.create_time.desc()).paginate(page, constants.ADMIN_NEWS_PAGE_MAX_COUNT, False)
         else:
             paginate = News.query.filter(News.status != 0).order_by(News.create_time.desc()).paginate(page, constants.ADMIN_NEWS_PAGE_MAX_COUNT, False)
-    except Exception as e:
-        current_app.logger.error(e)
-    # 4. 构造响应数据
-    news_list = []
-    total_page = 1
-    current_page = 1
-    if paginate:
         news_list = paginate.items
         total_page = paginate.pages
         current_page = paginate.page
+    except Exception as e:
+        current_app.logger.error(e)
+        abort(404)
+    # 4. 构造响应数据
+
     news_dict_list = []
     for news in news_list:
         news_dict_list.append(news.to_review_dict())
