@@ -41,6 +41,7 @@ $(function () {
                     $('.user_center_name', parent.document).html(params['nick_name'])
                     $('#nick_name', parent.document).html(params['nick_name'])
                     $('.input_sub').blur()
+                    window.location.reload()
                 }else {
                     alert(resp.errmsg)
                 }

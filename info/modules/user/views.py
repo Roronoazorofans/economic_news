@@ -1,10 +1,55 @@
 # coding=utf-8
 from . import user_blue
-from flask import render_template, g, redirect, url_for, request, current_app, jsonify, session
+from flask import render_template, g, redirect, url_for, request, current_app, jsonify, session,abort
 from info.utils.comment import user_login_data
 from info import db, response_code, constants
 from info.utils.captcha.file_storage import upload_file
 from info.models import News, Category
+
+
+@user_blue.route('/user_follow')
+@user_login_data
+def user_follow():
+    """我的关注"""
+    user = g.user
+    # 接受参数
+    page = request.args.get('p', '1')
+    # 校验参数
+    try:
+        page = int(page)
+    except Exception as e:
+        current_app.logger.error(e)
+        page = 1
+        # 查询该用户的关注用户
+    follows_list = []
+    total_page = 1
+    current_page = 1
+    try:
+        paginate = user.followed.paginate(page, constants.USER_FOLLOWED_MAX_COUNT,False)
+        follows_list = paginate.items
+        total_page = paginate.pages
+        current_page = paginate.page
+    except Exception as e:
+        current_app.logger.error(e)
+        abort(404)
+    follows_dict_list = []
+    for follows in follows_list:
+        follows_dict_list.append(follows.to_dict())
+
+    context = {
+        'follows': follows_dict_list,
+        'total_page': total_page,
+        'current_page': current_page
+    }
+
+    return render_template('news/user_follow.html', context=context)
+
+
+
+
+
+
+
 
 @user_blue.route('/news_list')
 @user_login_data

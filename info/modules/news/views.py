@@ -6,6 +6,52 @@ from info import constants, db, response_code
 from info.utils.comment import user_login_data
 
 
+
+@news_blue.route('/followed_user', methods=['POST'])
+@user_login_data
+def followed_user():
+    """添加关注"""
+    login_user = g.user
+    if not login_user:
+        return jsonify(errno=response_code.RET.SESSIONERR, errmsg='用户未登录')
+    # 获取参数
+    user_id = request.json.get('user_id')
+    action = request.json.get('action')
+    # 校验参数
+    if not all([user_id, action]):
+        return jsonify(errno=response_code.RET.PARAMERR, errmsg='缺少参数')
+    if action not in ['follow','unfollow']:
+        return jsonify(errno=response_code.RET.PARAMERR, errmsg='参数错误')
+    # 查询要添加关注的用户是否存在
+    try:
+        other = User.query.get(user_id)
+    except Exception as e:
+        current_app.logger.error(e)
+        return jsonify(errno=response_code.RET.DBERR, errmsg='查询数据失败')
+    if not other:
+        return jsonify(errno=response_code.RET.NODATA, errmsg='用户不存在')
+
+    if action == 'follow':
+        if other not in login_user.followed:
+            login_user.followed.append(other)
+        else:
+            return jsonify(errno=response_code.RET.DATAEXIST, errmsg='已关注')
+    else:
+        if other in login_user.followed:
+            login_user.followed.remove(other)
+        else:
+            return jsonify(errno=response_code.RET.NODATA, errmsg='未关注')
+    # 将要添加关注的用户同步到数据库
+    try:
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.error(e)
+        return jsonify(errno=response_code.RET.DBERR, errmsg='存储数据失败')
+    # 返回结果
+    return jsonify(errno=response_code.RET.OK, errmsg='操作成功')
+
+
 # 评论点赞和取消点赞
 @news_blue.route('/comment_like', methods=['POST'])
 @user_login_data
@@ -212,6 +258,13 @@ def news_detail(news_id):
         if news in user.collection_news:
             is_collected = True
 
+    # 添加是否关注状态
+    is_followed = False
+
+    if user and news.user:
+        if news.user in user.followed:
+            is_followed = True
+
 
     # 展示新闻评论数据
     # 根据新闻id查询该新闻的所有评论数据
@@ -242,7 +295,8 @@ def news_detail(news_id):
         "news_clicks":news_clicks,
         "news":news.to_dict(),
         "is_collected":is_collected,
-        "comments":comment_dict_list
+        "comments":comment_dict_list,
+        "is_followed": is_followed
     }
 
     return render_template('news/detail.html',context=context)
