@@ -37,7 +37,7 @@ def user_follow():
         follows_dict_list.append(follows.to_dict())
 
     context = {
-        'follows': follows_dict_list,
+        'users': follows_dict_list,
         'total_page': total_page,
         'current_page': current_page
     }
