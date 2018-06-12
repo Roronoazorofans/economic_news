@@ -294,7 +294,7 @@ $(function(){
             "user_id": user_id
         }
         $.ajax({
-            url: "/news/user_follow",
+            url: "/news/followed_user",
             type: "post",
             contentType: "application/json",
             headers: {
@@ -328,7 +328,7 @@ $(function(){
             "user_id": user_id
         }
         $.ajax({
-            url: "/news/user_follow",
+            url: "/news/followed_user",
             type: "post",
             contentType: "application/json",
             headers: {
